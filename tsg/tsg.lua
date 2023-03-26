@@ -18,11 +18,11 @@ end
 local entity = loadstring(game:HttpGet("https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/main/Libraries/entityHandler.lua", true), "entity")()
 entity.fullEntityRefresh()
 
-local utilities = isfile and loadfile and isfile("tsg/utilities.lua") and loadfile("tsg/utilities.lua", "utilities")() or loadstring(game:HttpGet("https://github.com/joeengo/exploiting/blob/main/tsg/utilities.lua?raw=true"), "utilities")()
-utilities.init()
+--local utilities = isfile and loadfile and isfile("tsg/utilities.lua") and loadfile("tsg/utilities.lua", "utilities")() or loadstring(game:HttpGet("https://github.com/joeengo/exploiting/blob/main/tsg/utilities.lua?raw=true"), "utilities")()
+--utilities.init()
 
 local library = isfolder and isfile and loadfile and isfolder("engosUtilities") and isfile("engosUtilities/ui.lua") and loadfile("engosUtilities/ui.lua", "ui")() or loadstring(game:HttpGet("https://github.com/joeengo/exploiting/blob/main/UILibrary.lua?raw=true", true), "ui")()
-library:Init("tsg.lua v1.07 | .gg/WYvnhbkwAA | engo#0320")
+library:Init("tsg.lua v1.08 | by engo")
 
 local CombatTab = library:Tab("Combat")
 local WorldTab = library:Tab("World")
@@ -41,6 +41,7 @@ local uis = game:GetService("UserInputService")
 local starterGui = game:GetService("StarterGui")
 local placeVersion = game.PlaceVersion
 
+--[[
 if not utilities.isUpdated() then
     local stat = utilities.getUpdated()
     local message = "Uh oh, this shouldnt happen..."
@@ -57,7 +58,7 @@ if not utilities.isUpdated() then
         Duration = 5,
         Button1 = "OK",
     })
-end
+end]]
 
 -- function compat
 local islclosure = islclosure or (iscclosure and function(x) return not iscclosure(x) end)
@@ -423,16 +424,8 @@ function resolvePath(parent, ...)
     return last
 end
 
-local keyedRemotes = utilities.remotes
-getgenv().remotes = keyedRemotes
-
-if not keyedRemotes then
-    warn("[tsg.lua] Failed to get remotes! (table)")
-end
-
-if not keyedRemotes.meleePlayer then
-    warn("[tsg.lua] Failed to get remotes! (meleePlayer)")
-end
+--local keyedRemotes = utilities.remotes
+--getgenv().remotes = keyedRemotes
 
 tsg = {
     ClientData = require(resolvePath(rs, "modules", "player", "ClientData")),
@@ -442,11 +435,6 @@ tsg = {
     fpsUtil = require(resolvePath(rs, "modules", "misc", "fpsUtil")),
     Projectiles = require(resolvePath(rs, "modules", "game", "Projectiles")),
     AtmosphericLighting = require(resolvePath(rs, "modules", "game", "AtmosphericLighting")),
-
-    MeleePlayerRemote = keyedRemotes.meleePlayer,
-    HitStructureRemote = keyedRemotes.hitStructure,
-    MineRemote = keyedRemotes.mine,
-    ChopRemote = keyedRemotes.chop,
 
     MeleeAnimalRemote = resolvePath(rs, "remoteInterface", "interactions", "meleeAnimal"),
     EatRemote = resolvePath(rs, "remoteInterface", "interactions", "eat"),
@@ -459,6 +447,7 @@ tsg = {
     EquipClothingRemote = resolvePath(rs, "remoteInterface", "inventory", "equipClothing"),
     TakeRemote = resolvePath(rs, "remoteInterface", "inventory", "take"),
 
+    SetToolSlotEvent = resolvePath(rs, "remoteInterface", "inventory", "setToolSlot"),
     SetHungerEvent = resolvePath(rs, "remoteInterface", "playerData", "setHunger"),
     SetInventoryEvent = resolvePath(rs, "remoteInterface", "playerData", "setinventory"),
 }
@@ -481,7 +470,30 @@ local animalContainer = resolvePath(workspace, "animals"); do
 end
 
 
-do -- KILLAURA
+if false then
+
+    local invTable
+    local clientEvent = tsg.SetToolSlotEvent.OnClientEvent
+    for i,v in next, getconnections(clientEvent) do 
+        local upval = debug.getupvalue(v.Function, 1)
+        if typeof(upval) == "table" then 
+            invTable = upval
+            break
+        end
+    end
+
+    if not invTable then 
+        warn("[tsg.lua] No hotbar table found, killaura disabling!")
+    end
+
+    local function AttackPlayer(tool, player) 
+        if not invTable then return end
+
+        for i,v in next, invTable then 
+            printtable(i, v, getmetatable(v))
+            break
+        end
+    end
 
     local rayparams = RaycastParams.new()
     rayparams.FilterType = Enum.RaycastFilterType.Blacklist
@@ -642,7 +654,7 @@ do -- KILLAURA
                         target = closestEntity or closestAnimal
 
                         if closestEntity then
-                            tsg.MeleePlayerRemote:FireServer(bestWeapon, closestEntity.Player)
+                            AttackPlayer(bestWeapon, closestEntity.Player)
                             continue
                         end
 
@@ -1554,7 +1566,7 @@ do -- STaCK SIZE THING
     })
 end
 
-
+--[[
 do 
     -- MATH SKIDDED I DONT LIKE MATH
 	local function LaunchAngle(v: number, g: number, d: number, h: number, higherArc: boolean)
@@ -1664,10 +1676,10 @@ do
         Tab = CombatTab,
     })
 end
-
+]]
 ----library:Seperator()
 
-do 
+if false then
     local folder = resolvePath(workspace, "placedStructures")
     local nuker
     tsg.Structures = {}
@@ -1747,9 +1759,7 @@ do
                             if magCheck and healthCheck and localPlaceCheck and teamPlaceCheck then 
                                 for i = 1, 3 do
                                     task.spawn(function()
-                                        tsg.HitStructureRemote:FireServer(bestAxe, v, v.PrimaryPart.Position)
-                                        tsg.HitStructureRemote:FireServer(bestPick, v, v.PrimaryPart.Position)
-                                        tsg.HitStructureRemote:FireServer(bestSword, v, v.PrimaryPart.Position)
+
                                     end)
                                 end
                             end
@@ -2016,7 +2026,7 @@ do -- AUTO MINE
         end))
 
         table.insert(connections, wr.DescendantRemoving:Connect(function(descendant) 
-            tsg.Mineables[descendant] = nil
+            tsg.Mineables[descendant] = ni
             if oreEsps[descendant] then
                 oreEsps[descendant].cleanUp()
             end
@@ -2033,7 +2043,7 @@ do -- AUTO MINE
 
 
     local lastHit = tick()
-    local automine; automine = library:Toggle({
+    --[[local automine; automine = library:Toggle({
         Name = "Auto Mine",
         Default = false,
         Function = function(value)
@@ -2067,7 +2077,7 @@ do -- AUTO MINE
 
                                 for i = 1, 10 do
                                     task.spawn(function()
-                                        remote:FireServer(bestTool, v.i, v.cf)
+                                        I_AM_LAZY(bestTool, v.i, v.cf)
                                     end)
                                 end
 
@@ -2104,7 +2114,7 @@ do -- AUTO MINE
             highlightInstance.Enabled = value
         end,
         Tab = WorldTab,
-    })
+    })]]
 
     library:Seperator(WorldTab)
 
