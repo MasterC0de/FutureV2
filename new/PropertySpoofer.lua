@@ -93,3 +93,4 @@ local function SpoofProperty(toSpoof, property, value)
 end
 
 getgenv().SpoofProperty = SpoofProperty
+return SpoofProperty
