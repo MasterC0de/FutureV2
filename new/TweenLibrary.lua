@@ -20,22 +20,22 @@ local TweenService = game:GetService("TweenService")
 local getValue = TweenService.GetValue
 local renderStepped = game:GetService("RunService").RenderStepped
 
-local function ApplyAlpha(StartNum, GoalNum, Alpha) 
+local function Lerp(StartNum, GoalNum, Alpha) 
     return StartNum + ((GoalNum - StartNum) * Alpha)
 end
 
 local TweenMethods = {
     Vector2 = function(Start, Goal, Alpha) 
-        local nx = ApplyAlpha(Start.X, Goal.X, Alpha)
-        local ny = ApplyAlpha(Start.Y, Goal.Y, Alpha)
+        local nx = Lerp(Start.X, Goal.X, Alpha)
+        local ny = Lerp(Start.Y, Goal.Y, Alpha)
 
         return Vector2.new(nx, ny)
     end,
     UDim2 = function(Start, Goal, Alpha)
-        local nSX = ApplyAlpha(Start.X.Scale, Goal.X.Scale, Alpha)
-        local nSY = ApplyAlpha(Start.Y.Scale, Goal.Y.Scale, Alpha)
-        local nOX = ApplyAlpha(Start.X.Offset, Goal.X.Offset, Alpha)
-        local nOY = ApplyAlpha(Start.Y.Offset, Goal.Y.Offset, Alpha)
+        local nSX = Lerp(Start.X.Scale, Goal.X.Scale, Alpha)
+        local nSY = Lerp(Start.Y.Scale, Goal.Y.Scale, Alpha)
+        local nOX = Lerp(Start.X.Offset, Goal.X.Offset, Alpha)
+        local nOY = Lerp(Start.Y.Offset, Goal.Y.Offset, Alpha)
 
         return UDim2.new(nSX, nOX, nSY, nOY)
     end,
@@ -44,16 +44,16 @@ local TweenMethods = {
         local R2, G2, B2 = Goal.R, Goal.G, Goal.B
 
         local nR, nG, nB = 
-            ApplyAlpha(R1, R2, Alpha),
-            ApplyAlpha(G1, G2, Alpha),
-            ApplyAlpha(B1, B2, Alpha)
+            Lerp(R1, R2, Alpha),
+            Lerp(G1, G2, Alpha),
+            Lerp(B1, B2, Alpha)
 
         return Color3.new(nR, nG, nB)
     end,
     Vector3 = function(Start, Goal, Alpha)
-        local nx = ApplyAlpha(Start.X, Goal.X, Alpha)
-        local ny = ApplyAlpha(Start.Y, Goal.Y, Alpha)
-        local nz = ApplyAlpha(Start.Z, Goal.Z, Alpha)
+        local nx = Lerp(Start.X, Goal.X, Alpha)
+        local ny = Lerp(Start.Y, Goal.Y, Alpha)
+        local nz = Lerp(Start.Z, Goal.Z, Alpha)
 
         return Vector3.new(nx, ny, nz)
     end,
@@ -62,22 +62,22 @@ local TweenMethods = {
         local _x, _y, _z, _R00, _R01, _R02, _R10, _R11, _R12, _R20, _R21, _R22 = Goal:GetComponents()
 
         local x_, y_, z_, R00_, R01_, R02_, R10_, R11_, R12_, R20_, R21_, R22_ =
-            ApplyAlpha(x, _x, Alpha),
-            ApplyAlpha(y, _y, Alpha),
-            ApplyAlpha(z, _z, Alpha),
-            ApplyAlpha(R00, _R00, Alpha),
-            ApplyAlpha(R01, _R01, Alpha),
-            ApplyAlpha(R02, _R02, Alpha),
-            ApplyAlpha(R10, _R10, Alpha),
-            ApplyAlpha(R11, _R11, Alpha),
-            ApplyAlpha(R12, _R12, Alpha),
-            ApplyAlpha(R20, _R20, Alpha),
-            ApplyAlpha(R21, _R21, Alpha),
-            ApplyAlpha(R22, _R22, Alpha)
+            Lerp(x, _x, Alpha),
+            Lerp(y, _y, Alpha),
+            Lerp(z, _z, Alpha),
+            Lerp(R00, _R00, Alpha),
+            Lerp(R01, _R01, Alpha),
+            Lerp(R02, _R02, Alpha),
+            Lerp(R10, _R10, Alpha),
+            Lerp(R11, _R11, Alpha),
+            Lerp(R12, _R12, Alpha),
+            Lerp(R20, _R20, Alpha),
+            Lerp(R21, _R21, Alpha),
+            Lerp(R22, _R22, Alpha)
 
         return CFrame.new(x_, y_, z_, R00_, R01_, R02_, R10, R11_, R12_, R20_, R21_, R22_)
     end,
-    number = ApplyAlpha,
+    number = Lerp,
 }
 
 function TweenLibrary:GetValue(alpha, easingStyle, easingDirection) 
