@@ -471,30 +471,6 @@ end
 
 
 if false then
-
-    local invTable
-    local clientEvent = tsg.SetToolSlotEvent.OnClientEvent
-    for i,v in next, getconnections(clientEvent) do 
-        local upval = debug.getupvalue(v.Function, 1)
-        if typeof(upval) == "table" then 
-            invTable = upval
-            break
-        end
-    end
-
-    if not invTable then 
-        warn("[tsg.lua] No hotbar table found, killaura disabling!")
-    end
-
-    local function AttackPlayer(tool, player) 
-        if not invTable then return end
-
-        for i,v in next, invTable then 
-            printtable(i, v, getmetatable(v))
-            break
-        end
-    end
-
     local rayparams = RaycastParams.new()
     rayparams.FilterType = Enum.RaycastFilterType.Blacklist
     rayparams.RespectCanCollide = true
