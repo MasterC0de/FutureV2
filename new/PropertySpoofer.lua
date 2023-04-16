@@ -19,6 +19,11 @@ end
 local get_thread_identity = (syn and syn.get_thread_identity) or getthreadidentity
 local set_thread_identity = (syn and syn.set_thread_identity) or setthreadidentity
 
+local function cleanString(str) 
+    local newStr = str:gsub("\0", "")
+    return newStr
+end
+
 -- thread identity debug id
 local function getDebugId(inst) 
     local oldThreadIdentity = get_thread_identity()
@@ -32,12 +37,29 @@ local function rawsetproperty(obj, idx, val, customFunc)
     local disabled = {}
     for i, v in next, getconnections(obj.Changed) do 
         table.insert(disabled, v)
-        v:Disable()
+        if v.Disable then
+            local suc, err = pcall(function()
+                v:Disable()
+            end)
+            if (not suc) then 
+                warn("[PropertySpoofer] ERROR WHILE DISABLING CONNECTION (CHANGED) #" .. i .. " ON" .. obj:GetFullName() .. "\nERROR: " .. err)
+            end
+        else
+            warn("[PropertySpoofer] FAILED DISABLING CONNECTION (CHANGED) #" .. i .. " ON" .. obj:GetFullName())
+        end
     end
     for i, v in next, getconnections(obj:GetPropertyChangedSignal(idx)) do 
         table.insert(disabled, v)
-        
-        v:Disable()
+        if v.Disable then
+            local suc, err = pcall(function()
+                v:Disable()
+            end)
+            if (not suc) then 
+                warn("[PropertySpoofer] ERROR WHILE DISABLING CONNECTION (GPCS) #" .. i .. " ON" .. obj:GetFullName() .. "\nERROR: " .. err)
+            end
+        else
+            warn("[PropertySpoofer] FAILED DISABLING CONNECTION (GPCS) #" .. i .. " ON" .. obj:GetFullName())
+        end
     end
     if customFunc then
         customFunc(obj, idx, val)
@@ -60,6 +82,8 @@ oldIndex = hookmetamethod(game, "__index", function(self, index)
     if typeOfInd ~= "string" then 
         return oldResult
     end
+
+    index = cleanString(index)
 
     if typeOfSelf == "Instance" then -- Should always be true, but what do i know
         local className = oldIndex(self, "ClassName") -- self.ClassName
@@ -84,6 +108,8 @@ oldNewIndex = hookmetamethod(game, "__newindex", function(self, index, value)
     if typeOfInd ~= "string" then 
         return oldNewIndex(self, index, value)
     end
+
+    index = cleanString(index)
 
     if typeOfSelf == "Instance" then -- Should always be true, but what do i know
         local className = self.ClassName
@@ -126,7 +152,7 @@ local function SpoofProperty(toSpoof, property, value)
     if typeOf == "Instance" then 
         local debugId = getDebugId(toSpoof)
         local newValue = value
-        propertySpoofingFunctions[debugId .. property] = function(self)
+        propertySpoofingFunctions[debugId .. property] = function(self, index)
             return newValue
         end
         updateValueFunctions[debugId .. property] = function(self, index, val)
@@ -135,7 +161,7 @@ local function SpoofProperty(toSpoof, property, value)
         end
     elseif typeOf == "string" then -- its a classname
         local debugIdValueTable = {}
-        propertySpoofingFunctions[toSpoof .. property] = function(self) 
+        propertySpoofingFunctions[toSpoof .. property] = function(self, index) 
             local debugId = getDebugId(self)
             return debugIdValueTable[debugId] or value
         end
