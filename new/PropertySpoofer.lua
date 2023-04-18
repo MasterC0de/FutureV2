@@ -1,6 +1,10 @@
 -- engo's property spoofer
 -- trying to make a undetectable one
 
+if not hooksignal then
+    return warn("Exploit not supported, getconnections is too unreliable and causes detections.")
+end
+
 local oldIndex, oldNewIndex
 local propertySpoofingFunctions = {}
 local updateValueFunctions = {}
@@ -33,42 +37,21 @@ local function getDebugId(inst)
     return debugId
 end
 
+local function hookFunc(info, ...) 
+    local isSyn = issynapsefunction(getconnectionfunction(info.Connection))
+    return isSyn, ...
+end
+
 local function rawsetproperty(obj, idx, val, customFunc) 
-    local disabled = {}
-    for i, v in next, getconnections(obj.Changed) do 
-        table.insert(disabled, v)
-        if v.Disable then
-            local suc, err = pcall(function()
-                v:Disable()
-            end)
-            if (not suc) then 
-                warn("[PropertySpoofer] ERROR WHILE DISABLING CONNECTION (CHANGED) #" .. i .. " ON" .. obj:GetFullName() .. "\nERROR: " .. err)
-            end
-        else
-            warn("[PropertySpoofer] FAILED DISABLING CONNECTION (CHANGED) #" .. i .. " ON" .. obj:GetFullName())
-        end
-    end
-    for i, v in next, getconnections(obj:GetPropertyChangedSignal(idx)) do 
-        table.insert(disabled, v)
-        if v.Disable then
-            local suc, err = pcall(function()
-                v:Disable()
-            end)
-            if (not suc) then 
-                warn("[PropertySpoofer] ERROR WHILE DISABLING CONNECTION (GPCS) #" .. i .. " ON" .. obj:GetFullName() .. "\nERROR: " .. err)
-            end
-        else
-            warn("[PropertySpoofer] FAILED DISABLING CONNECTION (GPCS) #" .. i .. " ON" .. obj:GetFullName())
-        end
-    end
+    hooksignal(obj.Changed, hookFunc)
+    hooksignal(obj:GetPropertyChangedSignal(idx), hookFunc)
     if customFunc then
         customFunc(obj, idx, val)
     else
         obj[idx] = val
     end
-    for i, v in next, disabled do 
-        v:Enable()
-    end
+    restoresignal(obj.Changed)
+    restoresignal(obj:GetPropertyChangedSignal(idx))
 end
 
 oldIndex = hookmetamethod(game, "__index", function(self, index) 
@@ -112,7 +95,7 @@ oldNewIndex = hookmetamethod(game, "__newindex", function(self, index, value)
     index = cleanString(index)
 
     if typeOfSelf == "Instance" then -- Should always be true, but what do i know
-        local className = self.ClassName
+        local className = oldIndex(self, "ClassName")
         local debugId = getDebugId(self)
 
         local cnFunc, idFunc = updateValueFunctions[className .. index], updateValueFunctions[debugId .. index]
@@ -138,20 +121,21 @@ end)
 -- This function basically sets the propertys value to the value and then returns it indexed from the instance, this removes quite a few detections.
 local function validateValueForObject(self, index, value) 
     local oldValue = oldIndex(self, index)
-    rawsetproperty(self, index, value)
+    rawsetproperty(self, index, value, oldNewIndex)
     local realValue = oldIndex(self, index)
-    rawsetproperty(self, index, oldValue)
+    rawsetproperty(self, index, oldValue, oldNewIndex)
     return realValue
 end
 
 -- toSpoof: a classname or instance, both should work
 -- property: name of property
 -- value: the value that the game thinks the property has, this may change if the game sets the value to attempt detections 
+-- value can also be a function that passes in the instance as a parameter for dynamic.
 local function SpoofProperty(toSpoof, property, value) 
     local typeOf = typeof(toSpoof)
     if typeOf == "Instance" then 
         local debugId = getDebugId(toSpoof)
-        local newValue = value
+        local newValue = typeof(value) == "function" and value(toSpoof) or value
         propertySpoofingFunctions[debugId .. property] = function(self, index)
             return newValue
         end
@@ -163,7 +147,7 @@ local function SpoofProperty(toSpoof, property, value)
         local debugIdValueTable = {}
         propertySpoofingFunctions[toSpoof .. property] = function(self, index) 
             local debugId = getDebugId(self)
-            return debugIdValueTable[debugId] or value
+            return debugIdValueTable[debugId] or (typeof(value) == "function" and value(toSpoof) or value)
         end
         updateValueFunctions[toSpoof .. property] = function(self, index, val)
             local debugId = getDebugId(self)
