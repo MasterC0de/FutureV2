@@ -24,7 +24,7 @@ local get_thread_identity = (syn and syn.get_thread_identity) or getthreadidenti
 local set_thread_identity = (syn and syn.set_thread_identity) or setthreadidentity
 
 local function cleanString(str) 
-    local newStr = str:gsub("\0", "")
+    local newStr = string.split(str, "\0")[1] -- More secure than just gsubbing out \0
     return newStr
 end
 
